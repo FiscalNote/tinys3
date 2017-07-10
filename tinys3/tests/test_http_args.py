@@ -78,29 +78,3 @@ class TestHttpArgs(unittest.TestCase):
         """
         self.setup_adapter('', '\n'.join(self.files), False)
         self.assertEquals(list(self.r.run()), self.parsed_files)
-
-
-    # def test_set_retry(self):
-    #     parent_self = self
-
-    #     class FakeRequests(object):
-    #         def __init__(self):
-    #             raise AssertionError()
-    #         def get(self, *arg, **kwargs):
-    #             raise AssertionError()
-    #             parent_self.assertTrue('retrffadfadsy' in kwargs)
-    #             parent_self.assertEquals(kwargs['retry'], 30)
-
-    #     class Fake(ListRequest):
-    #         def adapter(self):
-    #             parent_self.assertFalse(True)
-    #             return FakeRequests()
-
-    #     conn = Connection("TEST_ACCESS_KEY", "TEST_SECRET_KEY", tls=True,
-    #                       http_params={"timeout": 30})
-    #     request = Fake(conn, 'prefix', 'bucket')
-
-    #     self.assertIn("timeout", conn.http_params)
-    #     self.assertIn("timeout", request.http_params)
-    #     request.run()
-        

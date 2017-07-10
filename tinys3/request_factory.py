@@ -30,11 +30,14 @@ XML_PARSE_STRING = "{{http://s3.amazonaws.com/doc/2006-03-01/}}{0}"
 
 
 class S3Request(object):
-    def __init__(self, conn, params=None):
+    def __init__(self, conn, params=None, http_params=None):
         self.auth = conn.auth
         self.tls = conn.tls
         self.endpoint = conn.endpoint
         self.params = params
+        self.http_params = {}
+        if conn.http_params is not None:
+            self.http_params = conn.http_params
 
     def bucket_url(self, key, bucket):
         """Function to generate the request URL. Is used by every request"""
@@ -82,7 +85,8 @@ class GetRequest(S3Request):
 
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
-        r = self.adapter().get(url, auth=self.auth, headers=self.headers)
+        r = self.adapter().get(url, auth=self.auth, headers=self.headers,
+                               **self.http_params)
         r.raise_for_status()
         return r
 
@@ -113,7 +117,7 @@ class ListRequest(S3Request):
             resp = self.adapter().get(url, auth=self.auth, params={
                 'prefix': self.prefix,
                 'marker': marker,
-            })
+            }, **self.http_params)
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
             for tag in root.findall(k('Contents')):
@@ -171,7 +175,7 @@ class ListMultipartUploadRequest(S3Request):
                 'key-marker': self.key_marker,
                 'prefix': self.prefix,
                 'upload-id-marker': self.upload_id_marker
-            })
+            }, **self.http_params)
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
             for tag in root.findall(k('Upload')):
@@ -215,7 +219,7 @@ class ListPartsRequest(S3Request):
                 'encoding-type': self.encoding,
                 'max-parts': self.max_parts,
                 'part-number-marker': self.part_number_marker
-            })
+            }, **self.http_params)
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
             for tag in root.findall(k('Part')):
@@ -247,7 +251,7 @@ class InitiateMultipartUploadRequest(S3Request):
             import lxml.etree as ET
         except ImportError:
             import xml.etree.ElementTree as ET
-        r = self.adapter().post(url, auth=self.auth)
+        r = self.adapter().post(url, auth=self.auth, **self.http_params)
         r.raise_for_status()
         root = ET.fromstring(r.content)
         return root.find(k('UploadId')).text
@@ -261,7 +265,7 @@ class DeleteRequest(S3Request):
 
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
-        r = self.adapter().delete(url, auth=self.auth)
+        r = self.adapter().delete(url, auth=self.auth, **self.http_params)
         r.raise_for_status()
         return r
 
@@ -275,7 +279,7 @@ class HeadRequest(S3Request):
 
     def run(self):
         url = self.bucket_url(self.key, self.bucket)
-        r = self.adapter().head(url, auth=self.auth, headers=self.headers)
+        r = self.adapter().head(url, auth=self.auth, headers=self.headers, **self.http_params)
         r.raise_for_status()
         return r
 
@@ -343,7 +347,8 @@ class UploadRequest(S3Request):
             r = self.adapter().put(self.bucket_url(self.key, self.bucket),
                                    data=data,
                                    headers=headers,
-                                   auth=self.auth)
+                                   auth=self.auth,
+                                   **self.http_params)
             r.raise_for_status()
         finally:
             # if close is set, try to close the fp like object
@@ -396,7 +401,8 @@ class UploadPartRequest(S3Request):
             r = self.adapter().put(self.bucket_url(self.key, self.bucket),
                                    data=data,
                                    headers=self.headers,
-                                   auth=self.auth)
+                                   auth=self.auth,
+                                   **self.http_params)
             r.raise_for_status()
         finally:
             # if close is set, try to close the fp like object
@@ -428,7 +434,7 @@ class CompleteUploadRequest(S3Request):
         data += "</CompleteMultipartUpload>"
         # POST /ObjectName?uploadId=UploadId
         url = self.bucket_url(self.key, self.bucket)
-        r = self.adapter().post(url, auth=self.auth, data=data)
+        r = self.adapter().post(url, auth=self.auth, data=data, **self.http_params)
         r.raise_for_status()
         return r
 
@@ -444,7 +450,7 @@ class CancelUploadRequest(S3Request):
     def run(self):
         # DELETE /ObjectName?uploadId=UploadId
         url = self.bucket_url(self.key, self.bucket)
-        r = self.adapter().delete(url, auth=self.auth)
+        r = self.adapter().delete(url, auth=self.auth, **self.http_params)
         r.raise_for_status()
         return r
 
@@ -478,7 +484,8 @@ class CopyRequest(S3Request):
         if self.metadata:
             headers.update(self.metadata)
         r = self.adapter().put(self.bucket_url(self.to_key, self.to_bucket),
-                               auth=self.auth, headers=headers)
+                               auth=self.auth, headers=headers,
+                               **self.http_params)
         r.raise_for_status()
         return r
 

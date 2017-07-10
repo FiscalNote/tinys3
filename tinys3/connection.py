@@ -16,7 +16,7 @@ class Base(object):
     """
 
     def __init__(self, access_key, secret_key, default_bucket=None, tls=False,
-                 endpoint="s3.amazonaws.com"):
+                 endpoint="s3.amazonaws.com", http_params=None):
         """
         Creates a new S3 connection
 
@@ -35,6 +35,7 @@ class Base(object):
         self.auth = S3Auth(access_key, secret_key)
         self.tls = tls
         self.endpoint = endpoint
+        self.http_params = http_params
 
     def bucket(self, bucket):
         """
